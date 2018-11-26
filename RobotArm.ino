@@ -4,19 +4,20 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <Bounce2.h>
 
+// Map robot piece to PWM ports
 #define BASE 0
-#define ARM_FIRST 3
-#define MAX_ARM_FIRST 425
-#define MIN_ARM_FIRST 260
-
-#define ARM_SECOND 8
-#define ARM_THREE 15
-#define HAND 4
-#define FINGER 11
-#define SAFE_DIST 20
+#define ARM_FIRST 7
+#define ARM_SECOND 15
+#define ARM_THREE 12
+#define HAND 8
+#define FINGER 3
 
 const uint8_t servos[6] = {BASE, ARM_FIRST, ARM_SECOND, ARM_THREE, HAND, FINGER}; // Numbers pwm port to servos
 
+// Map safety parameters (avoid extreme displacement)
+#define MAX_ARM_FIRST 425
+#define MIN_ARM_FIRST 260
+#define SAFE_DIST 20
 
 
 // DISPLAY: OLED display TWI address
@@ -45,7 +46,7 @@ int v_servo = 310;
 
 const uint8_t servoPwmPort[6] = {BASE, ARM_FIRST, ARM_SECOND, ARM_THREE, HAND, FINGER}; // Numbers pwm port to servos
 int v_servo_position[6] = {310, 340, 330, 310, 310, 310};
-int v_servo_position_reset[6] = {310, 340, 330, 310, 310, 310};
+int v_servo_position_reset[6] = {277, 340, 340, 310, 310, 310};
 
 void setup() {
   // Init Serial port output
@@ -98,6 +99,18 @@ void resetArm() {
 
 }
 
+void ArmAtRest() {
+  // Init Serial port output
+  displayString(F("Rest arm"));
+  rotateBase(190);
+  moveArmFirstSegment(280);
+  moveArmSecondSegment(550);
+  moveArmThirdSegment(500);
+  rotateHand(150);
+  rotateHand(440);
+  displayString(F("Rested Arm"));
+
+}
 void moveArmFirstSegment(int move_to) {
   // Avoid too much move
   if (move_to > MAX_ARM_FIRST) {
@@ -237,106 +250,36 @@ void loop() {
       }
       if (i == 1) {
         // Move the selected arm + 1
-        
+        Serial.println("Servo number: " + String(selectedServo));
+        Serial.println("Servo PWM Port: " + String(servoPwmPort[selectedServo]));
+        Serial.println("Servo value: " + String(v_servo_position[selectedServo] + 1));
         display.setCursor(0, 0);
         display.println("Servo number: " + String(selectedServo));
         display.println("Servo value: " + String(v_servo_position[selectedServo] + 1));
-        pwm.setPWM(selectedServo, 0, v_servo_position[selectedServo] + 1);
+        pwm.setPWM(servoPwmPort[selectedServo], 0, v_servo_position[selectedServo] + 1);
         v_servo_position[selectedServo] = v_servo_position[selectedServo] + 1;
       }
       if (i == 2) {
         // Move the selected arm - 1
+        Serial.println("Servo number: " + String(selectedServo));
+        Serial.println("Servo PWM Port: " + String(servoPwmPort[selectedServo]));
+        Serial.println("Servo value: " + String(v_servo_position[selectedServo] - 1));
         display.setCursor(0, 0);
         display.println("Servo number: " + String(selectedServo));
         display.println("Servo value: " + String(v_servo_position[selectedServo] - 1));
-        pwm.setPWM(selectedServo, 0, v_servo_position[selectedServo] - 1);
+        pwm.setPWM(servoPwmPort[selectedServo], 0, v_servo_position[selectedServo] - 1);
         v_servo_position[selectedServo] = v_servo_position[selectedServo] - 1;
       }
       if (i == 3) {
         // Run other program
         resetArm();
+        delay(1000);
+        ArmAtRest();
 
       }
       display.display();
     }
-    // --------------
-    //      if ( buttons[i].rose() ) {
-    //        display.clearDisplay();
-    //        display.setCursor(27, 30);
-    //        if (i == 0) {
-    //          //Button one is pressed!
-    //          displayString("Premuto 1+");
-    //          displayString(String(v_servo_position[3]));
-    //          pwm.setPWM(3, 0, v_servo_position[3]);
-    //          v_servo_position[3] = v_servo_position[3] + 5;
-    //        }
-    //        if (i == 1) {
-    //          //Button one is pressed!
-    //          displayString("Premuto 1+");
-    //          displayString(String(v_servo_position[3]));
-    //          pwm.setPWM(3, 0, v_servo_position[3]);
-    //          v_servo_position[3] = v_servo_position[3] + 5;
-    //        }
-    //        if (i == 2) {
-    //          //Button 2 is pressed!
-    //          displayString("Premuto 2-");
-    //          displayString(String(v_servo_position[3]));
-    //          pwm.setPWM(3, 0, v_servo_position[3]);
-    //          v_servo_position[3] = v_servo_position[3] - 5;
-    //        }
-    //        if (i == 3) {
-    //          //Button 3 is pressed!
-    //          displayString("Premuto 3");
-    //          moveServo(0, 430);
-    //          moveServo(3, 430);
-    //          moveServo(8, 410);
-    //          moveServo(15, 400);
-    //          moveServo(4, 410);
-    //          moveServo(11, 200);
-    //
-    //        }
-    //        if (i == 4) {
-    //          //Button 4 is pressed!
-    //          displayString("Premuto 4");
-    //          resetArm();
-    //
-    //        }
-    //        if (i == 5) {
-    //          displayString("Premuto 5");
-    //          moveServo(0, 280);
-    //          moveServo(3, 280);
-    //          moveServo(8, 250);
-    //          moveServo(15, 280);
-    //          moveServo(4, 280);
-    //          moveServo(11, 400);
-    //
-    //        }
-    //        if (i == 6) {
-    //          //Button 6 is pressed!
-    //          displayString("Premuto 6");
-    //          moveServo(8, 510); //ok
-    //
-    //          moveServo(8, 250);
-    //          moveServo(15, 500); //ok
-    //
-    //          moveServo(15, 240);
-    //
-    //        }
-    //        if (i == 7) {
-    //          //Button 7 is pressed!
-    //          displayString("Premuto 7");
-    //          moveServo(4, 270);
-    //
-    //          moveServo(4, 430);
-    //
-    //        }
-    //        if (i == 8) {
-    //          //Button 8 is pressed!
-    //          displayString("Premuto 8");
-    //          moveAll();
-    //        }
-    //        display.display();
-    //      }
+  
   }
 
 }
