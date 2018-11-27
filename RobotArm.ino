@@ -15,8 +15,18 @@
 const uint8_t servos[6] = {BASE, ARM_FIRST, ARM_SECOND, ARM_THREE, HAND, FINGER}; // Numbers pwm port to servos
 
 // Map safety parameters (avoid extreme displacement)
+#define MAX_BASE 474
+#define MIN_BASE 166
 #define MAX_ARM_FIRST 425
 #define MIN_ARM_FIRST 260
+#define MAX_ARM_SECOND 560
+#define MIN_ARM_SECOND 215
+#define MAX_ARM_THREE 550
+#define MIN_ARM_THREE 215
+#define MAX_HAND 458
+#define MIN_HAND 140
+#define MAX_FINGER 350
+#define MIN_FINGER 173
 #define SAFE_DIST 20
 
 
@@ -25,6 +35,7 @@ const uint8_t servos[6] = {BASE, ARM_FIRST, ARM_SECOND, ARM_THREE, HAND, FINGER}
 
 // BUTTONS: Max & Min
 #define NUM_BUTTONS 4
+
 // da sistemare
 const uint8_t BUTTON_PINS[NUM_BUTTONS] = {9, 10, 11, 12};
 Bounce * buttons = new Bounce[NUM_BUTTONS];
@@ -37,6 +48,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #if (SSD1306_LCDHEIGHT != 32)
 #error("Height incorrect, please fix Adafruit_SSD1306.h!");
 #endif
+// Analog Force read
+int fsrAnalogPin = A7; 
+int fsrReading;    
 
 // Status posizione servo
 int selectedServo = 0;
@@ -135,10 +149,16 @@ void rotateHand(int move_to) {
 }
 void closeFinger() {
   //
-  moveServo(FINGER, 1);
+  for (int i = v_servo_position[5]; (i <= MAX_FINGER)or(fsrReading<1020) ; i = i + 1) {
+      fsrReading=analogRead(fsrAnalogPin);
+      Serial.println(fsrReading);
+      moveServo(FINGER, i);
+      delay(5);
+    }
+  
 }
 void openFinger() {
-  moveServo(FINGER, 1);
+  moveServo(FINGER,MIN_FINGER+5);
 }
 void moveServo(int n_servo, int move_to) {
   // Log
@@ -232,7 +252,7 @@ void moveAll() {
 
 }
 void loop() {
-
+  
   // put your main code here, to run repeatedly:
   for (int i = 0; i < NUM_BUTTONS; i++)  {
     // Update the Bounce instance :
